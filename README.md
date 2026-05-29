@@ -2,6 +2,9 @@
 
 3D-Visualisierung des Knowly v2 Knowledge Graph mit 6 narrated scenes fuer die AI Hour.
 
+**Live:** https://janbohlmann-lab.github.io/knowly-v2-kg-viz/
+**Repo:** https://github.com/janbohlmann-lab/knowly-v2-kg-viz
+
 ## Use
 
 ### Lokal starten

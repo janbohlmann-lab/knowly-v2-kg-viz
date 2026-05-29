@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -136,39 +136,39 @@
 
 <div id="loader">
   <div class="spinner"></div>
-  <div class="msg">Lade Knowledge Graph &hellip;</div>
+  <div class="msg">Loading knowledge graph &hellip;</div>
 </div>
 
 <div id="header">
   <div class="brand">Knowly v2 · Knowledge Graph</div>
-  <h1>Wie Knowly denkt</h1>
+  <h1>How Knowly Thinks</h1>
   <div class="sub">AI Hour · 2026-05-29</div>
 </div>
 
 <div id="story-panel">
-  <div class="scene-num">Szene <span id="scene-i">1</span> / <span id="scene-n">6</span></div>
-  <h2 id="scene-title">Lade…</h2>
-  <p id="scene-body">Einen Moment.</p>
+  <div class="scene-num">Scene <span id="scene-i">1</span> / <span id="scene-n">6</span></div>
+  <h2 id="scene-title">Loading…</h2>
+  <p id="scene-body">One moment.</p>
   <div class="stats" id="scene-stats"></div>
 </div>
 
 <div id="legend">
-  <div class="title">Knoten-Typen</div>
+  <div class="title">Node Types</div>
   <div id="legend-groups"></div>
-  <div class="title" style="margin-top:14px;">Wissens-Lanes</div>
+  <div class="title" style="margin-top:14px;">Knowledge Lanes</div>
   <div id="legend-lanes"></div>
 </div>
 
 <div id="story-nav">
-  <button id="prev-btn">‹ Zurück</button>
+  <button id="prev-btn">‹ Back</button>
   <div class="dots" id="dots"></div>
   <span class="scene-name" id="scene-name">—</span>
-  <button id="play-btn">▶ Auto-Play</button>
-  <button id="next-btn">Weiter ›</button>
+  <button id="play-btn">▶ Auto-play</button>
+  <button id="next-btn">Next ›</button>
 </div>
 
 <div id="tooltip"></div>
-<div id="hint">Klicken &amp; ziehen zum Drehen · Scroll zum Zoomen</div>
+<div id="hint">Click &amp; drag to rotate · Scroll to zoom</div>
 
 <div id="graph"></div>
 
@@ -183,66 +183,66 @@
 const SCENES = [
   {
     name: "Knowly v2",
-    title: "Knowly v2 — der Knowledge Graph",
-    body: "Das hier ist <span class='highlight'>ein Ausschnitt</span> aus unserem neuen Wissens-Graphen. <span class='highlight'>1.747 Knoten</span> und <span class='highlight'>8.271 Beziehungen</span> aus zentralen Pets-Deli-Themen — Produkte, Studien, Halter-Stimmen, Compliance-Regeln, DUX-Ranking. Der echte Graph hat <span class='highlight'>99.871 Entitäten</span> und <span class='highlight'>147.311 Beziehungen</span>.",
+    title: "Knowly v2 — The Knowledge Graph",
+    body: "This is <span class='highlight'>an excerpt</span> of our new knowledge graph: <span class='highlight'>1,747 nodes</span> and <span class='highlight'>8,271 relations</span> drawn from central Pets-Deli themes — products, studies, dog-owner voices, compliance rules, DUX ranking. The full graph holds <span class='highlight'>99,871 entities</span> and <span class='highlight'>147,311 relations</span>.",
     stats: [
-      { v: "1.747", l: "Knoten gezeigt" },
-      { v: "8.271", l: "Beziehungen" },
-      { v: "13", l: "Anker-Themen" },
-      { v: "6 / 7", l: "Lanes sichtbar" },
+      { v: "1,747", l: "Nodes shown" },
+      { v: "8,271", l: "Relations" },
+      { v: "13", l: "Anchor topics" },
+      { v: "6 / 7", l: "Lanes visible" },
     ],
     highlight: "all",
   },
   {
     name: "Lanes",
-    title: "Sechs Wissens-Lanes",
-    body: "Jede Farbe einer Kante ist eine eigene <span class='highlight'>Wissens-Lane</span>. Lila = wissenschaftliche Studien. Grün = Halter-Reviews. Rot = Compliance-Regeln. Blau = unsere Produkt-Truth. Gelb = DUX-Ranking. Orange = Akzeptanz-Tests aus dem Pets-Deli-Lab. Ein Knoten kann in mehreren Lanes leben — z.B. ein Produkt, über das es Reviews UND Studien gibt.",
+    title: "Six Knowledge Lanes",
+    body: "Each edge color is its own <span class='highlight'>knowledge lane</span>. Purple = scientific studies. Green = owner reviews. Red = compliance rules. Light blue = our product truth. Yellow = DUX ranking. Orange = acceptance tests from the Pets-Deli lab. A node can live in several lanes at once — a product can have reviews AND studies AND compliance hits at the same time.",
     stats: [
-      { v: "4.629", l: "Studien-Kanten" },
-      { v: "1.823", l: "Produkt-Kanten" },
-      { v: "956", l: "Review-Kanten" },
-      { v: "241", l: "DUX-Kanten" },
+      { v: "4,629", l: "Study edges" },
+      { v: "1,823", l: "Product edges" },
+      { v: "956", l: "Review edges" },
+      { v: "241", l: "DUX edges" },
     ],
     highlight: "all",
     cycleLanes: true,
   },
   {
     name: "Belly+",
-    title: "Belly+ Huhn — ein Produkt im Zentrum",
-    body: "Wenn ein Halter nach <span class='highlight'>Verdauungs-Sorgen</span> für seinen Hund fragt, denkt Knowly so: vom Produkt zu den Studien (TruPet™-Postbiotika), zu den Reviews der Halter, zu den DUX-Daten welche Variante in Frage kommt, und zu den Compliance-Regeln, die definieren wie wir das auf der PDP formulieren dürfen. <span class='highlight'>Alles auf einem Klick.</span>",
+    title: "Belly+ Chicken — One Product at the Center",
+    body: "When an owner asks about <span class='highlight'>digestion issues</span> for their dog, this is how Knowly thinks: from the product to the studies (TruPet™ postbiotics), to the owner reviews, to the DUX data on which variant fits the profile, and to the compliance rules defining how we may phrase it on the PDP. <span class='highlight'>All on one click.</span>",
     stats: [],
     highlight: "node",
     focusNode: "Trockenfutter Belly+ Huhn für Hunde",
     focusFallback: "Belly+",
   },
   {
-    name: "Studien",
-    title: "412 Studien — als eigene Entitäten",
-    body: "In v1 waren Studien <span class='highlight'>nur Erwähnungen</span>. In v2 ist jede Studie ein eigener Knoten mit Volltext, Autoren, Methodik. Wir können jetzt fragen: <em>'Welche Studien stützen Postbiotika bei Hunden?'</em> — und kriegen direkt die Quellenliste. <span class='highlight'>Lila Knoten</span> sind Studien, <span class='highlight'>blaue Knoten</span> sind unsere Produkte. Jede Verbindung dazwischen ist ein Wissenschafts-Beleg.",
+    name: "Studies",
+    title: "412 Studies — Now First-Class Entities",
+    body: "In v1, studies were <span class='highlight'>just mentions inside text</span>. In v2, every study is its own node with full text, authors and methodology. We can now ask: <em>'Which studies support postbiotics in dogs?'</em> — and get a citation list back. <span class='highlight'>Purple nodes</span> are studies, <span class='highlight'>light-blue nodes</span> are our products. Every link between them is a piece of scientific evidence.",
     stats: [
-      { v: "412", l: "Studien total" },
+      { v: "412", l: "Studies total" },
       { v: "100%", l: "Coverage" },
-      { v: "148", l: "im Ausschnitt" },
+      { v: "148", l: "In this excerpt" },
     ],
     highlight: "groups",
     targetGroups: ["study", "product"],
   },
   {
     name: "Compliance",
-    title: "Compliance — was wir nicht sagen dürfen",
-    body: "Rot markierte Kanten zeigen <span class='highlight'>Compliance-Bezüge</span>. Knowly kennt jetzt <span class='highlight'>52 Werbe-Regeln</span> (Heilmittelwerbegesetz, VSW-Urteile, eigene Pets-Deli-Spielregeln) und prüft jede Skill-Ausgabe automatisch. Heute haben wir live <span class='highlight'>41 Produkte mit strafbewehrtem 'ideal bei'-Pattern</span> im Sortiment gefunden.",
+    title: "Compliance — What We Can't Say",
+    body: "Red edges show <span class='highlight'>compliance links</span>. Knowly now knows <span class='highlight'>52 advertising rules</span> (German Heilmittelwerbegesetz, court rulings, internal Pets-Deli guardrails) and audits every skill output automatically. Today we found <span class='highlight'>41 live products</span> matching the legally actionable 'ideal for [condition]' pattern in our own catalog.",
     stats: [
-      { v: "52", l: "Compliance-Regeln" },
-      { v: "41", l: "Live-Treffer" },
-      { v: "🔴⚡", l: "Status-Marker" },
+      { v: "52", l: "Compliance rules" },
+      { v: "41", l: "Live hits" },
+      { v: "🔴⚡", l: "Status marker" },
     ],
     highlight: "lane",
     targetLane: "compliance",
   },
   {
-    name: "Frei erkunden",
-    title: "Frei erkunden",
-    body: "Klick auf einen Knoten zum Fokussieren. Hover für Details. Maus-Drag zum Drehen, Scroll zum Zoomen. <span class='highlight'>Probier mal:</span> klick auf einen lila Studien-Knoten und folge den Kanten zu einem blauen Produkt-Knoten — das ist ein Wissenschafts-Beleg in Aktion.",
+    name: "Free explore",
+    title: "Free Exploration",
+    body: "Click any node to focus on it. Hover for details. Drag to rotate, scroll to zoom. <span class='highlight'>Try this:</span> click a purple study node and follow the edges to a light-blue product node — that's scientific evidence in action.",
     stats: [],
     highlight: "all",
   },
@@ -429,6 +429,7 @@ function toggleAutoPlay() {
 function startAutoPlay() {
   document.getElementById('play-btn').textContent = '❚❚ Pause';
   document.getElementById('play-btn').style.background = 'rgba(74, 144, 226, 0.25)';
+  // Re-trigger current scene so highlight transitions also work after a click
   autoPlayTimer = setInterval(() => {
     if (currentScene >= SCENES.length - 1) {
       stopAutoPlay();
@@ -440,7 +441,7 @@ function startAutoPlay() {
 
 function stopAutoPlay() {
   if (autoPlayTimer) { clearInterval(autoPlayTimer); autoPlayTimer = null; }
-  document.getElementById('play-btn').textContent = '▶ Auto-Play';
+  document.getElementById('play-btn').textContent = '▶ Auto-play';
   document.getElementById('play-btn').style.background = 'transparent';
 }
 
