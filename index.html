@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Knowly v2 · Knowledge Graph · AI Hour</title>
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --panel: rgba(15, 22, 38, 0.85);
+    --panel-border: rgba(120, 144, 200, 0.25);
+    --text: #e8edf5;
+    --text-dim: #98a3b5;
+    --accent: #4A90E2;
+    --accent-2: #9013FE;
+    --shadow: 0 8px 40px rgba(0,0,0,0.4);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; overflow: hidden; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+  #graph { width: 100vw; height: 100vh; cursor: grab; }
+  #graph:active { cursor: grabbing; }
+
+  /* Top-left title */
+  #header {
+    position: absolute; top: 24px; left: 28px;
+    padding: 14px 22px;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    backdrop-filter: blur(12px);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    z-index: 10;
+    pointer-events: none;
+    user-select: none;
+  }
+  #header .brand { font-size: 11px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 4px; }
+  #header h1 { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.3px; }
+  #header .sub { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+
+  /* Story panel right */
+  #story-panel {
+    position: absolute; top: 24px; right: 28px; width: 380px;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    backdrop-filter: blur(12px);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    z-index: 10;
+    padding: 22px 26px;
+    transition: opacity 0.35s ease;
+  }
+  #story-panel .scene-num { font-size: 11px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; font-weight: 600; }
+  #story-panel h2 { margin: 0 0 12px 0; font-size: 24px; font-weight: 600; line-height: 1.2; letter-spacing: -0.4px; }
+  #story-panel p { margin: 0 0 14px 0; font-size: 14px; line-height: 1.5; color: var(--text); }
+  #story-panel .highlight { color: var(--accent); font-weight: 600; }
+  #story-panel .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--panel-border); }
+  #story-panel .stat { font-size: 12px; }
+  #story-panel .stat .v { font-size: 22px; font-weight: 600; color: var(--accent); display: block; margin-bottom: 2px; }
+  #story-panel .stat .l { color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.8px; font-size: 10px; }
+
+  /* Bottom navigation */
+  #story-nav {
+    position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%);
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    backdrop-filter: blur(12px);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    z-index: 10;
+    padding: 10px 14px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  #story-nav button { background: transparent; border: 1px solid var(--panel-border); color: var(--text); cursor: pointer; padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; transition: background 0.2s, border-color 0.2s; }
+  #story-nav button:hover { background: rgba(74, 144, 226, 0.15); border-color: var(--accent); }
+  #story-nav button:disabled { opacity: 0.35; cursor: not-allowed; }
+  #story-nav .dots { display: flex; gap: 8px; align-items: center; }
+  #story-nav .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-dim); opacity: 0.4; cursor: pointer; transition: all 0.2s; }
+  #story-nav .dot.active { background: var(--accent); opacity: 1; transform: scale(1.4); }
+  #story-nav .dot:hover { opacity: 0.85; }
+  #story-nav .scene-name { font-size: 12px; color: var(--text-dim); margin: 0 8px; min-width: 130px; text-align: center; }
+
+  /* Legend bottom-left */
+  #legend {
+    position: absolute; bottom: 28px; left: 28px;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    backdrop-filter: blur(12px);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    z-index: 10;
+    padding: 14px 18px;
+    font-size: 12px;
+    max-width: 220px;
+  }
+  #legend .title { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 10px; }
+  #legend .row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; cursor: pointer; user-select: none; transition: opacity 0.2s; }
+  #legend .row:hover { opacity: 0.85; }
+  #legend .row.muted { opacity: 0.35; }
+  #legend .swatch { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  #legend .lane-row .swatch { width: 14px; height: 3px; border-radius: 2px; }
+  #legend .label { color: var(--text); }
+  #legend .count { color: var(--text-dim); margin-left: auto; font-size: 11px; }
+
+  /* Node tooltip */
+  #tooltip {
+    position: absolute; pointer-events: none;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    backdrop-filter: blur(12px);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 12px;
+    max-width: 360px;
+    z-index: 20;
+    box-shadow: var(--shadow);
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  #tooltip.visible { opacity: 1; }
+  #tooltip .name { font-weight: 600; font-size: 13px; margin-bottom: 4px; }
+  #tooltip .meta { color: var(--text-dim); font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; }
+  #tooltip .desc { color: var(--text); line-height: 1.4; font-size: 12px; }
+
+  /* Loader */
+  #loader { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 16px; z-index: 100; background: var(--bg); }
+  #loader .spinner { width: 40px; height: 40px; border: 3px solid var(--panel-border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  #loader .msg { color: var(--text-dim); font-size: 13px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Hint */
+  #hint { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: var(--text-dim); font-size: 12px; pointer-events: none; opacity: 0; transition: opacity 0.4s; z-index: 5; }
+  #hint.visible { opacity: 1; }
+</style>
+</head>
+<body>
+
+<div id="loader">
+  <div class="spinner"></div>
+  <div class="msg">Lade Knowledge Graph &hellip;</div>
+</div>
+
+<div id="header">
+  <div class="brand">Knowly v2 · Knowledge Graph</div>
+  <h1>Wie Knowly denkt</h1>
+  <div class="sub">AI Hour · 2026-05-29</div>
+</div>
+
+<div id="story-panel">
+  <div class="scene-num">Szene <span id="scene-i">1</span> / <span id="scene-n">6</span></div>
+  <h2 id="scene-title">Lade…</h2>
+  <p id="scene-body">Einen Moment.</p>
+  <div class="stats" id="scene-stats"></div>
+</div>
+
+<div id="legend">
+  <div class="title">Knoten-Typen</div>
+  <div id="legend-groups"></div>
+  <div class="title" style="margin-top:14px;">Wissens-Lanes</div>
+  <div id="legend-lanes"></div>
+</div>
+
+<div id="story-nav">
+  <button id="prev-btn">‹ Zurück</button>
+  <div class="dots" id="dots"></div>
+  <span class="scene-name" id="scene-name">—</span>
+  <button id="play-btn">▶ Auto-Play</button>
+  <button id="next-btn">Weiter ›</button>
+</div>
+
+<div id="tooltip"></div>
+<div id="hint">Klicken &amp; ziehen zum Drehen · Scroll zum Zoomen</div>
+
+<div id="graph"></div>
+
+<!-- 3d-force-graph via CDN -->
+<script src="https://unpkg.com/three@0.149.0/build/three.min.js"></script>
+<script src="https://unpkg.com/3d-force-graph@1.73.0/dist/3d-force-graph.min.js"></script>
+
+<script>
+// ============================================================
+// 1) Data + Scene Config
+// ============================================================
+const SCENES = [
+  {
+    name: "Knowly v2",
+    title: "Knowly v2 — der Knowledge Graph",
+    body: "Das hier ist <span class='highlight'>ein Ausschnitt</span> aus unserem neuen Wissens-Graphen. <span class='highlight'>1.747 Knoten</span> und <span class='highlight'>8.271 Beziehungen</span> aus zentralen Pets-Deli-Themen — Produkte, Studien, Halter-Stimmen, Compliance-Regeln, DUX-Ranking. Der echte Graph hat <span class='highlight'>99.871 Entitäten</span> und <span class='highlight'>147.311 Beziehungen</span>.",
+    stats: [
+      { v: "1.747", l: "Knoten gezeigt" },
+      { v: "8.271", l: "Beziehungen" },
+      { v: "13", l: "Anker-Themen" },
+      { v: "6 / 7", l: "Lanes sichtbar" },
+    ],
+    highlight: "all",
+  },
+  {
+    name: "Lanes",
+    title: "Sechs Wissens-Lanes",
+    body: "Jede Farbe einer Kante ist eine eigene <span class='highlight'>Wissens-Lane</span>. Lila = wissenschaftliche Studien. Grün = Halter-Reviews. Rot = Compliance-Regeln. Blau = unsere Produkt-Truth. Gelb = DUX-Ranking. Orange = Akzeptanz-Tests aus dem Pets-Deli-Lab. Ein Knoten kann in mehreren Lanes leben — z.B. ein Produkt, über das es Reviews UND Studien gibt.",
+    stats: [
+      { v: "4.629", l: "Studien-Kanten" },
+      { v: "1.823", l: "Produkt-Kanten" },
+      { v: "956", l: "Review-Kanten" },
+      { v: "241", l: "DUX-Kanten" },
+    ],
+    highlight: "all",
+    cycleLanes: true,
+  },
+  {
+    name: "Belly+",
+    title: "Belly+ Huhn — ein Produkt im Zentrum",
+    body: "Wenn ein Halter nach <span class='highlight'>Verdauungs-Sorgen</span> für seinen Hund fragt, denkt Knowly so: vom Produkt zu den Studien (TruPet™-Postbiotika), zu den Reviews der Halter, zu den DUX-Daten welche Variante in Frage kommt, und zu den Compliance-Regeln, die definieren wie wir das auf der PDP formulieren dürfen. <span class='highlight'>Alles auf einem Klick.</span>",
+    stats: [],
+    highlight: "node",
+    focusNode: "Trockenfutter Belly+ Huhn für Hunde",
+    focusFallback: "Belly+",
+  },
+  {
+    name: "Studien",
+    title: "412 Studien — als eigene Entitäten",
+    body: "In v1 waren Studien <span class='highlight'>nur Erwähnungen</span>. In v2 ist jede Studie ein eigener Knoten mit Volltext, Autoren, Methodik. Wir können jetzt fragen: <em>'Welche Studien stützen Postbiotika bei Hunden?'</em> — und kriegen direkt die Quellenliste. <span class='highlight'>Lila Knoten</span> sind Studien, <span class='highlight'>blaue Knoten</span> sind unsere Produkte. Jede Verbindung dazwischen ist ein Wissenschafts-Beleg.",
+    stats: [
+      { v: "412", l: "Studien total" },
+      { v: "100%", l: "Coverage" },
+      { v: "148", l: "im Ausschnitt" },
+    ],
+    highlight: "groups",
+    targetGroups: ["study", "product"],
+  },
+  {
+    name: "Compliance",
+    title: "Compliance — was wir nicht sagen dürfen",
+    body: "Rot markierte Kanten zeigen <span class='highlight'>Compliance-Bezüge</span>. Knowly kennt jetzt <span class='highlight'>52 Werbe-Regeln</span> (Heilmittelwerbegesetz, VSW-Urteile, eigene Pets-Deli-Spielregeln) und prüft jede Skill-Ausgabe automatisch. Heute haben wir live <span class='highlight'>41 Produkte mit strafbewehrtem 'ideal bei'-Pattern</span> im Sortiment gefunden.",
+    stats: [
+      { v: "52", l: "Compliance-Regeln" },
+      { v: "41", l: "Live-Treffer" },
+      { v: "🔴⚡", l: "Status-Marker" },
+    ],
+    highlight: "lane",
+    targetLane: "compliance",
+  },
+  {
+    name: "Frei erkunden",
+    title: "Frei erkunden",
+    body: "Klick auf einen Knoten zum Fokussieren. Hover für Details. Maus-Drag zum Drehen, Scroll zum Zoomen. <span class='highlight'>Probier mal:</span> klick auf einen lila Studien-Knoten und folge den Kanten zu einem blauen Produkt-Knoten — das ist ein Wissenschafts-Beleg in Aktion.",
+    stats: [],
+    highlight: "all",
+  },
+];
+
+let GRAPH_DATA = null;
+let GROUP_DEFS = null;
+let LANE_DEFS = null;
+let Graph = null;
+let currentScene = 0;
+let mutedGroups = new Set();
+let mutedLanes = new Set();
+let laneCycleTimer = null;
+let autoPlayTimer = null;
+const AUTOPLAY_INTERVAL_MS = 14000;
+
+// ============================================================
+// 2) Init
+// ============================================================
+async function init() {
+  const res = await fetch('kg-data.json');
+  const data = await res.json();
+  GRAPH_DATA = data;
+  GROUP_DEFS = data.entity_groups;
+  LANE_DEFS = data.lanes;
+
+  buildLegend();
+  buildDots();
+  initGraph();
+  setScene(0);
+  document.getElementById('loader').style.display = 'none';
+
+  setTimeout(() => {
+    document.getElementById('hint').classList.add('visible');
+    setTimeout(() => document.getElementById('hint').classList.remove('visible'), 4000);
+  }, 1500);
+}
+
+// ============================================================
+// 3) Legend
+// ============================================================
+function buildLegend() {
+  // Groups
+  const groupCounts = {};
+  GRAPH_DATA.nodes.forEach(n => { groupCounts[n.group] = (groupCounts[n.group] || 0) + 1; });
+  const lgg = document.getElementById('legend-groups');
+  lgg.innerHTML = '';
+  Object.entries(GROUP_DEFS).forEach(([key, cfg]) => {
+    const count = groupCounts[key] || 0;
+    if (count === 0) return;
+    const row = document.createElement('div');
+    row.className = 'row group-row';
+    row.dataset.key = key;
+    row.innerHTML = `<div class="swatch" style="background:${cfg.color}"></div><span class="label">${cfg.label}</span><span class="count">${count}</span>`;
+    row.addEventListener('click', () => toggleGroup(key, row));
+    lgg.appendChild(row);
+  });
+
+  // Lanes
+  const laneCounts = {};
+  GRAPH_DATA.links.forEach(l => { laneCounts[l.lane] = (laneCounts[l.lane] || 0) + 1; });
+  const lgl = document.getElementById('legend-lanes');
+  lgl.innerHTML = '';
+  Object.entries(LANE_DEFS).forEach(([key, cfg]) => {
+    const count = laneCounts[key] || 0;
+    if (count === 0) return;
+    const row = document.createElement('div');
+    row.className = 'row lane-row';
+    row.dataset.key = key;
+    row.innerHTML = `<div class="swatch" style="background:${cfg.color}"></div><span class="label">${cfg.label}</span><span class="count">${count}</span>`;
+    row.addEventListener('click', () => toggleLane(key, row));
+    lgl.appendChild(row);
+  });
+}
+
+function toggleGroup(key, row) {
+  if (mutedGroups.has(key)) { mutedGroups.delete(key); row.classList.remove('muted'); }
+  else { mutedGroups.add(key); row.classList.add('muted'); }
+  Graph.nodeVisibility(n => !mutedGroups.has(n.group));
+  Graph.linkVisibility(l => {
+    const s = (typeof l.source === 'object') ? l.source : Graph.graphData().nodes.find(n => n.id === l.source);
+    const t = (typeof l.target === 'object') ? l.target : Graph.graphData().nodes.find(n => n.id === l.target);
+    if (!s || !t) return true;
+    return !mutedGroups.has(s.group) && !mutedGroups.has(t.group) && !mutedLanes.has(l.lane);
+  });
+}
+
+function toggleLane(key, row) {
+  if (mutedLanes.has(key)) { mutedLanes.delete(key); row.classList.remove('muted'); }
+  else { mutedLanes.add(key); row.classList.add('muted'); }
+  Graph.linkVisibility(l => !mutedLanes.has(l.lane) && !mutedGroups.has(((typeof l.source === 'object') ? l.source : Graph.graphData().nodes.find(n => n.id === l.source)).group));
+}
+
+// ============================================================
+// 4) Graph init (3d-force-graph)
+// ============================================================
+function initGraph() {
+  Graph = ForceGraph3D()(document.getElementById('graph'))
+    .backgroundColor('#0a0e1a')
+    .graphData({ nodes: GRAPH_DATA.nodes, links: GRAPH_DATA.links })
+    .nodeId('id')
+    .nodeLabel(n => '')  // we use custom tooltip
+    .nodeColor(n => n.color)
+    .nodeVal(n => n.size)
+    .nodeOpacity(0.95)
+    .nodeResolution(12)
+    .linkColor(l => l.color)
+    .linkOpacity(0.4)
+    .linkWidth(l => 0.4 + (l.weight * 0.06))
+    .linkDirectionalParticles(0)
+    .linkDirectionalParticleSpeed(0.006)
+    .linkDirectionalParticleWidth(1.3)
+    .linkDirectionalParticleColor(l => l.color)
+    .cooldownTicks(150)
+    .d3AlphaDecay(0.025)
+    .d3VelocityDecay(0.4)
+    .onNodeClick(node => {
+      const distance = 110;
+      const distRatio = 1 + distance / Math.hypot(node.x, node.y, node.z);
+      Graph.cameraPosition({ x: node.x * distRatio, y: node.y * distRatio, z: node.z * distRatio }, node, 1200);
+    })
+    .onNodeHover(node => {
+      const tt = document.getElementById('tooltip');
+      if (node) {
+        const groupLabel = (GROUP_DEFS[node.group] || {}).label || node.group;
+        const laneBadges = (node.lanes || []).filter(l => l !== 'unknown').map(l => (LANE_DEFS[l] || {}).label || l).join(' · ');
+        tt.innerHTML = `<div class="name">${escapeHtml(node.label)}</div><div class="meta">${groupLabel}${laneBadges ? ' · ' + laneBadges : ''}</div>${node.desc ? `<div class="desc">${escapeHtml(node.desc)}…</div>` : ''}`;
+        tt.classList.add('visible');
+      } else {
+        tt.classList.remove('visible');
+      }
+    });
+
+  // Camera + auto-rotate (subtle drift)
+  Graph.controls().autoRotate = true;
+  Graph.controls().autoRotateSpeed = 0.4;
+
+  // Initial wide camera position (apply multiple times to override 3d-force-graph's auto-fit)
+  setTimeout(() => Graph.cameraPosition({ x: 0, y: 0, z: 1900 }, { x: 0, y: 0, z: 0 }, 0), 100);
+  setTimeout(() => Graph.cameraPosition({ x: 0, y: 0, z: 1900 }, { x: 0, y: 0, z: 0 }, 0), 1500);
+  setTimeout(() => Graph.cameraPosition({ x: 0, y: 0, z: 1900 }, { x: 0, y: 0, z: 0 }, 0), 3500);
+
+  // Tooltip follow mouse
+  document.addEventListener('mousemove', e => {
+    const tt = document.getElementById('tooltip');
+    tt.style.left = (e.clientX + 16) + 'px';
+    tt.style.top = (e.clientY + 16) + 'px';
+  });
+}
+
+function escapeHtml(s) {
+  return (s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+// ============================================================
+// 5) Scene logic
+// ============================================================
+function buildDots() {
+  const dots = document.getElementById('dots');
+  dots.innerHTML = '';
+  SCENES.forEach((s, i) => {
+    const d = document.createElement('div');
+    d.className = 'dot';
+    d.title = s.name;
+    d.addEventListener('click', () => { stopAutoPlay(); setScene(i); });
+    dots.appendChild(d);
+  });
+  document.getElementById('scene-n').textContent = SCENES.length;
+  document.getElementById('prev-btn').addEventListener('click', () => { stopAutoPlay(); setScene(Math.max(0, currentScene - 1)); });
+  document.getElementById('next-btn').addEventListener('click', () => { stopAutoPlay(); setScene(Math.min(SCENES.length - 1, currentScene + 1)); });
+  document.getElementById('play-btn').addEventListener('click', toggleAutoPlay);
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight') { stopAutoPlay(); setScene(Math.min(SCENES.length - 1, currentScene + 1)); }
+    if (e.key === 'ArrowLeft') { stopAutoPlay(); setScene(Math.max(0, currentScene - 1)); }
+    if (e.key === ' ' || e.key === 'Spacebar') { e.preventDefault(); toggleAutoPlay(); }
+  });
+}
+
+function toggleAutoPlay() {
+  if (autoPlayTimer) stopAutoPlay();
+  else startAutoPlay();
+}
+
+function startAutoPlay() {
+  document.getElementById('play-btn').textContent = '❚❚ Pause';
+  document.getElementById('play-btn').style.background = 'rgba(74, 144, 226, 0.25)';
+  autoPlayTimer = setInterval(() => {
+    if (currentScene >= SCENES.length - 1) {
+      stopAutoPlay();
+      return;
+    }
+    setScene(currentScene + 1);
+  }, AUTOPLAY_INTERVAL_MS);
+}
+
+function stopAutoPlay() {
+  if (autoPlayTimer) { clearInterval(autoPlayTimer); autoPlayTimer = null; }
+  document.getElementById('play-btn').textContent = '▶ Auto-Play';
+  document.getElementById('play-btn').style.background = 'transparent';
+}
+
+function setScene(i) {
+  currentScene = i;
+  const s = SCENES[i];
+
+  // Update text
+  document.getElementById('scene-i').textContent = i + 1;
+  document.getElementById('scene-title').textContent = s.title;
+  document.getElementById('scene-body').innerHTML = s.body;
+  document.getElementById('scene-name').textContent = s.name;
+
+  // Stats
+  const statsEl = document.getElementById('scene-stats');
+  statsEl.innerHTML = '';
+  (s.stats || []).forEach(st => {
+    const e = document.createElement('div');
+    e.className = 'stat';
+    e.innerHTML = `<span class="v">${st.v}</span><span class="l">${st.l}</span>`;
+    statsEl.appendChild(e);
+  });
+
+  // Dots
+  document.querySelectorAll('#dots .dot').forEach((d, di) => d.classList.toggle('active', di === i));
+
+  // Buttons
+  document.getElementById('prev-btn').disabled = i === 0;
+  document.getElementById('next-btn').disabled = i === SCENES.length - 1;
+
+  // Stop lane cycle if previously running
+  if (laneCycleTimer) { clearInterval(laneCycleTimer); laneCycleTimer = null; }
+
+  // Apply scene highlight
+  applyHighlight(s);
+}
+
+function applyHighlight(s) {
+  const G = GRAPH_DATA;
+
+  // Reset to "all visible" defaults first
+  Graph.nodeVisibility(true);
+  Graph.linkVisibility(true);
+  Graph.nodeOpacity(0.95);
+  Graph.linkOpacity(0.4);
+  Graph.linkWidth(l => 0.4 + (l.weight * 0.06));
+  Graph.linkDirectionalParticles(0);
+
+  // Reset camera to wide view (unless we're focusing a node)
+  if (s.highlight !== 'node') {
+    resetCamera();
+  }
+
+  if (s.highlight === 'all') {
+    if (s.cycleLanes) startLaneCycle();
+  }
+
+  else if (s.highlight === 'lane' && s.targetLane) {
+    // Show only edges of target lane + their incident nodes
+    const targetNodeIds = new Set();
+    G.links.forEach(l => {
+      if (l.lane === s.targetLane) {
+        const sId = (typeof l.source === 'object') ? l.source.id : l.source;
+        const tId = (typeof l.target === 'object') ? l.target.id : l.target;
+        targetNodeIds.add(sId);
+        targetNodeIds.add(tId);
+      }
+    });
+    Graph.nodeVisibility(n => targetNodeIds.has(n.id));
+    Graph.linkVisibility(l => l.lane === s.targetLane);
+    Graph.linkWidth(2.6);
+    Graph.linkOpacity(0.95);
+    Graph.linkDirectionalParticles(4);
+    Graph.linkDirectionalParticleSpeed(0.012);
+    centerOnVisible(550);
+  }
+
+  else if (s.highlight === 'groups' && s.targetGroups) {
+    const targetSet = new Set(s.targetGroups);
+    const visibleIds = new Set();
+    // Collect node ids that have at least one edge to a target group
+    G.links.forEach(l => {
+      const sId = (typeof l.source === 'object') ? l.source.id : l.source;
+      const tId = (typeof l.target === 'object') ? l.target.id : l.target;
+      const sN = G.nodes.find(n => n.id === sId);
+      const tN = G.nodes.find(n => n.id === tId);
+      if (sN && tN && targetSet.has(sN.group) && targetSet.has(tN.group)) {
+        visibleIds.add(sId);
+        visibleIds.add(tId);
+      }
+    });
+    Graph.nodeVisibility(n => visibleIds.has(n.id));
+    Graph.linkVisibility(l => {
+      const sId = (typeof l.source === 'object') ? l.source.id : l.source;
+      const tId = (typeof l.target === 'object') ? l.target.id : l.target;
+      const sN = G.nodes.find(n => n.id === sId);
+      const tN = G.nodes.find(n => n.id === tId);
+      return sN && tN && targetSet.has(sN.group) && targetSet.has(tN.group);
+    });
+    Graph.linkWidth(1.8);
+    Graph.linkOpacity(0.85);
+    Graph.linkDirectionalParticles(2);
+    centerOnVisible(700);
+  }
+
+  else if (s.highlight === 'node' && s.focusNode) {
+    let target = G.nodes.find(n => n.id === s.focusNode || n.label === s.focusNode);
+    if (!target && s.focusFallback) {
+      target = G.nodes.find(n => n.id === s.focusFallback || n.label === s.focusFallback);
+    }
+    if (!target) {
+      target = G.nodes.find(n => n.label.toLowerCase().includes(s.focusNode.toLowerCase()));
+    }
+    if (target) {
+      // Collect 1-hop neighbor IDs
+      const neighborIds = new Set([target.id]);
+      G.links.forEach(l => {
+        const sId = (typeof l.source === 'object') ? l.source.id : l.source;
+        const tId = (typeof l.target === 'object') ? l.target.id : l.target;
+        if (sId === target.id) neighborIds.add(tId);
+        if (tId === target.id) neighborIds.add(sId);
+      });
+      // Hide everything else
+      Graph.nodeVisibility(n => neighborIds.has(n.id));
+      Graph.linkVisibility(l => {
+        const sId = (typeof l.source === 'object') ? l.source.id : l.source;
+        const tId = (typeof l.target === 'object') ? l.target.id : l.target;
+        return (sId === target.id || tId === target.id);
+      });
+      Graph.linkWidth(2.0);
+      Graph.linkOpacity(0.92);
+      Graph.linkDirectionalParticles(3);
+      Graph.linkDirectionalParticleSpeed(0.01);
+      // Camera focus with safe distance
+      setTimeout(() => {
+        if (target.x !== undefined) {
+          const distance = 280;
+          const dist = Math.hypot(target.x, target.y, target.z);
+          const distRatio = 1 + distance / (dist || 1);
+          Graph.cameraPosition(
+            { x: target.x * distRatio, y: target.y * distRatio, z: target.z * distRatio },
+            target,
+            1800
+          );
+        }
+      }, 300);
+    }
+  }
+}
+
+function resetCamera() {
+  // Sensible default: pull back to see the whole graph
+  Graph.cameraPosition({ x: 0, y: 0, z: 1900 }, { x: 0, y: 0, z: 0 }, 1500);
+}
+
+function centerOnVisible(distance = 700, delay = 800) {
+  // Fly camera to center-of-mass of currently visible nodes
+  setTimeout(() => {
+    const visibilityFn = Graph.nodeVisibility();
+    const visibleNodes = GRAPH_DATA.nodes.filter(n => {
+      if (typeof visibilityFn === 'function') return visibilityFn(n);
+      return visibilityFn !== false;
+    }).filter(n => n.x !== undefined);
+    if (!visibleNodes.length) return;
+    let cx = 0, cy = 0, cz = 0;
+    visibleNodes.forEach(n => { cx += n.x; cy += n.y; cz += n.z; });
+    cx /= visibleNodes.length; cy /= visibleNodes.length; cz /= visibleNodes.length;
+    // Position camera along the +z axis offset relative to center
+    const targetPos = { x: cx, y: cy, z: cz + distance };
+    Graph.cameraPosition(targetPos, { x: cx, y: cy, z: cz }, 1500);
+  }, delay);
+}
+
+function startLaneCycle() {
+  const lanes = Object.keys(LANE_DEFS).filter(l => l !== 'unknown');
+  let i = 0;
+  const apply = () => {
+    const lane = lanes[i % lanes.length];
+    Graph.linkOpacity(l => l.lane === lane ? 0.95 : 0.06);
+    Graph.linkWidth(l => l.lane === lane ? 2.2 : 0.3);
+    Graph.linkDirectionalParticles(l => l.lane === lane ? 3 : 0);
+    Graph.nodeOpacity(n => (n.lanes || []).includes(lane) ? 1 : 0.3);
+    i++;
+  };
+  apply();
+  laneCycleTimer = setInterval(apply, 2500);
+}
+
+// ============================================================
+// 6) Resize
+// ============================================================
+window.addEventListener('resize', () => {
+  if (Graph) Graph.width(window.innerWidth).height(window.innerHeight);
+});
+
+// Boot
+init();
+</script>
+
+</body>
+</html>
